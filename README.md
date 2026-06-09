@@ -31,3 +31,7 @@ Block Buster
 
 
 ### 게임을 진행할 수록 블럭이 빠르게 내려옵니다!
+<br>
+
+## 다운로드 링크
+https://drive.google.com/file/d/17HprvEmYsjEY-HlIiY_SZpUMJYheHpHI/view?usp=sharing
