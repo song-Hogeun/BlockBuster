@@ -61,7 +61,19 @@ public class Block : MonoBehaviour
         {
             itemCanvs[i].SetActive(false);
         }
+
         soundManager.EffectSoundPlay("BlockBreak");
+
+        if (ComboManager.Instance != null)
+        {
+            float comboScore = ComboManager.Instance.AddCombo();
+
+            if (ScoreManager.Instance != null)
+            {
+                ScoreManager.Instance.AddBlockScore(comboScore);
+            }
+        }
+
         StartCoroutine(BrokeCoroutine());
     }
 
