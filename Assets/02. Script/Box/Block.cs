@@ -31,7 +31,7 @@ public class Block : MonoBehaviour
 
     private void Update()
     {
-        if (uiManager != null && !uiManager.IsGameReady) 
+        if (GameManager.Instance != null && !GameManager.Instance.IsGameReady) 
             return;
         
         MoveBlock();
@@ -45,7 +45,7 @@ public class Block : MonoBehaviour
 
     void MoveBlock()
     {
-        if (!uiManager.IsGamePaused && !uiManager.IsGameOver)
+        if (!GameManager.Instance.IsGamePaused && !GameManager.Instance.IsGameOver)
         {
             transform.position += Vector3.down * BlockManager.moveSpeed * Time.deltaTime;
         }

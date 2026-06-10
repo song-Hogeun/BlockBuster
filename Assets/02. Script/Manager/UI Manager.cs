@@ -1,30 +1,23 @@
-using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 
 public class UIManager : MonoBehaviour
 {
-    public static UIManager Instance;
+    public static UIManager Instance { get; private set; }
 
-    [SerializeField] private ScoreManager scoreManager;
-    [SerializeField] private SoundManager soundManager;
     private ComboManager comboManager;
-    private PlayerCtrl player;
-    private Ground ground;
 
-    [SerializeField] private GameObject tempGroundPrefab;
-
+    [Header("InGame Text")]
     [SerializeField] private TextMeshProUGUI inGame_noticeText;
     [SerializeField] private TextMeshProUGUI inGame_currScoreText;
     [SerializeField] private TextMeshProUGUI inGame_maxScoreText;
 
+    [Header("Die Text")]
+    [SerializeField] private TextMeshProUGUI die_currScoreText;
+    [SerializeField] private TextMeshProUGUI die_maxScoreText;
 
-    [SerializeField] private TextMeshProUGUI Die_currScoreText;
-    [SerializeField] private TextMeshProUGUI Die_maxScoreText;
-
+    [Header("Combo Text")]
     [SerializeField] private TextMeshProUGUI comboText;
     [SerializeField] private TextMeshProUGUI multiplierText;
 
@@ -33,74 +26,41 @@ public class UIManager : MonoBehaviour
     [SerializeField] private float comboPopDuration = 0.12f;
     [SerializeField] private float comboReturnDuration = 0.12f;
 
+    [Header("UI Sets")]
     [SerializeField] private GameObject startSet;
     [SerializeField] private GameObject inGameSet;
-    [SerializeField] private GameObject DieSet;
+    [SerializeField] private GameObject dieSet;
     [SerializeField] private GameObject joyStickUI;
     [SerializeField] private GameObject extraLife;
-
-    private bool hasDieUIShown = false;
-    private float startTime;
-
-    public bool IsGameReady { get; private set; }
-    public bool IsGameStarted { get; private set; }
-    public bool IsGamePaused { get; set; }
-    public bool IsGameOver { get; set; }
 
     private Coroutine comboAnimCoroutine;
     private Coroutine extraLifeCoroutine;
     private Vector3 comboTextOriginScale;
 
-
     private void Awake()
     {
         Instance = this;
-        IsGameReady = false;
-        IsGameStarted = false;
-        IsGamePaused = false;
-        IsGameOver = false;
     }
 
-    void Start()
-{
-    player = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerCtrl>();
-    ground = FindFirstObjectByType<Ground>();
-    startTime = 3f;
-
-    if (comboText != null)
-        comboTextOriginScale = comboText.transform.localScale;
-
-    comboManager = ComboManager.Instance;
-
-    if (comboManager != null)
+    private void Start()
     {
-        comboManager.OnComboChanged += UpdateComboText;
-        comboManager.OnMultiplierChanged += UpdateMultiplierText;
+        if (comboText != null)
+            comboTextOriginScale = comboText.transform.localScale;
 
-        UpdateComboText(comboManager.CurrentCombo);
-        UpdateMultiplierText(comboManager.CurrentMultiplier);
-    }
-    else
-    {
-        UpdateComboText(0);
-        UpdateMultiplierText(1f);
-    }
+        comboManager = ComboManager.Instance;
 
-    Init(false, true, false, false, false, false);
-}
-
-    private void Update()
-    {
-        if (!IsGameReady || player == null || hasDieUIShown)
-            return;
-        
-        UpdateText();
-
-        if (player.ISDead)
+        if (comboManager != null)
         {
-            ground.StopAllCoroutines();
-            ground.gameObject.SetActive(false);
-            ShowDieUI();
+            comboManager.OnComboChanged += UpdateComboText;
+            comboManager.OnMultiplierChanged += UpdateMultiplierText;
+
+            UpdateComboText(comboManager.CurrentCombo);
+            UpdateMultiplierText(comboManager.CurrentMultiplier);
+        }
+        else
+        {
+            UpdateComboText(0);
+            UpdateMultiplierText(1f);
         }
     }
 
@@ -113,50 +73,82 @@ public class UIManager : MonoBehaviour
         comboManager.OnMultiplierChanged -= UpdateMultiplierText;
     }
 
-    void Init(bool _gameStart, bool _start, bool _inGame, bool _die, bool _joyStick, bool _extraLife)
+    public void ShowStartUI()
     {
-        IsGameStarted = _gameStart;
-        startSet.SetActive(_start);
-        inGameSet.SetActive(_inGame);
-        DieSet.SetActive(_die);
-        joyStickUI.SetActive(_joyStick);
-        extraLife.SetActive(_extraLife);
+        SetUI(
+            start: true,
+            inGame: false,
+            die: false,
+            joystick: false,
+            extraLifeActive: false
+        );
     }
 
-    public void StartPhase()
+    public void ShowInGameUI(bool joystickActive)
     {
-        if (IsGameStarted)
-            return;
-
-        StartCoroutine(StartGame());
+        SetUI(
+            start: false,
+            inGame: true,
+            die: false,
+            joystick: joystickActive,
+            extraLifeActive: false
+        );
     }
 
-    IEnumerator StartGame()
+    public void ShowDieUI(int currScore, int maxScore)
     {
-        Init(false, false, true, false, false, false);
-        IsGameReady = true;
-        
-        for (int i = 0; i < startTime; i++)
-        {
-            inGame_noticeText.text = Mathf.Ceil(startTime - i).ToString();
-            soundManager.EffectSoundPlay("Number");
-            yield return new WaitForSeconds(1f);
-        }
-        
-        joyStickUI.SetActive(true);
+        SetUI(
+            start: false,
+            inGame: false,
+            die: true,
+            joystick: false,
+            extraLifeActive: false
+        );
 
-        inGame_noticeText.text = "";
-    }
-    
-    public void SetGameStarted(bool GameStarted)
-    {
-        IsGameStarted = GameStarted;
+        if (die_currScoreText != null)
+            die_currScoreText.text = $"{currScore} m";
+
+        if (die_maxScoreText != null)
+            die_maxScoreText.text = $"{maxScore} m";
     }
 
-    private void UpdateText()
+    private void SetUI(bool start, bool inGame, bool die, bool joystick, bool extraLifeActive)
     {
-        inGame_currScoreText.text = scoreManager.currScore.ToString() + " m";
-        inGame_maxScoreText.text = scoreManager.maxScore.ToString() + " m";
+        if (startSet != null)
+            startSet.SetActive(start);
+
+        if (inGameSet != null)
+            inGameSet.SetActive(inGame);
+
+        if (dieSet != null)
+            dieSet.SetActive(die);
+
+        if (joyStickUI != null)
+            joyStickUI.SetActive(joystick);
+
+        if (extraLife != null)
+            extraLife.SetActive(extraLifeActive);
+    }
+
+    public void SetNoticeText(string text)
+    {
+        if (inGame_noticeText != null)
+            inGame_noticeText.text = text;
+    }
+
+    public void SetJoystickActive(bool isActive)
+    {
+        if (joyStickUI != null)
+            joyStickUI.SetActive(isActive);
+    }
+
+    public void UpdateScoreText(int currScore, int maxScore)
+    {
+        if (inGame_currScoreText != null)
+            inGame_currScoreText.text = $"{currScore} m";
+
+        if (inGame_maxScoreText != null)
+            inGame_maxScoreText.text = $"{maxScore} m";
     }
 
     private void UpdateComboText(int combo)
@@ -193,31 +185,14 @@ public class UIManager : MonoBehaviour
         multiplierText.text = $"x{multiplier:0.0}";
     }
 
-    private void ShowDieUI()
-    {
-        Init(false, false, false, true, false, false);
-        Die_currScoreText.text = scoreManager.currScore.ToString() + " m";
-        Die_maxScoreText.text = scoreManager.maxScore.ToString() + " m";
-
-        hasDieUIShown = true;
-    }
-
-    public void RestartGame()
-    {
-        if (comboManager != null)
-            comboManager.ResetCombo();
-
-        scoreManager.ResetScore();
-        ground.gameObject.SetActive(true);
-        ground.StopAllCoroutines();
-        SceneManager.LoadScene(0);
-    }
-
     public void ActiveExtraLife(bool isActive)
     {
+        if (extraLife == null)
+            return;
+
         extraLife.SetActive(isActive);
-        
-        if(isActive)
+
+        if (isActive)
             PlayExtraLifeTextAnimation();
     }
 
@@ -228,22 +203,15 @@ public class UIManager : MonoBehaviour
 
         if (extraLifeCoroutine != null)
             StopCoroutine(extraLifeCoroutine);
-        
+
         extraLifeCoroutine = StartCoroutine(ExtraLifeAnimCoroutine());
     }
 
-    IEnumerator ExtraLifeAnimCoroutine()
+    private IEnumerator ExtraLifeAnimCoroutine()
     {
         extraLife.SetActive(true);
         yield return new WaitForSeconds(0.5f);
         extraLife.SetActive(false);
-    }
-
-    public void GroundItem()
-    {
-        Vector3 pos = player.transform.position;
-        Vector3 targetPos = new Vector3(pos.x, pos.y - 1f, 0f);
-        GameObject tempGround = Instantiate(tempGroundPrefab, targetPos, Quaternion.identity);
     }
 
     private void PlayComboTextAnimation()
@@ -295,13 +263,13 @@ public class UIManager : MonoBehaviour
         string colorCode = "";
 
         if (combo >= 1000)
-            colorCode = "#A020F0"; // 보라색
+            colorCode = "#A020F0";
         else if (combo >= 500)
-            colorCode = "#FF0000"; // 빨간색
+            colorCode = "#FF0000";
         else if (combo >= 100)
-            colorCode = "#FF8C00"; // 주황색
+            colorCode = "#FF8C00";
         else if (combo >= 50)
-            colorCode = "#FFD700"; // 노란색
+            colorCode = "#FFD700";
 
         if (string.IsNullOrEmpty(colorCode))
             return combo.ToString();

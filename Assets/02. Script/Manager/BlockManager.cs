@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class BlockManager : MonoBehaviour
 {
-    [SerializeField] private UIManager uiManager;
     [SerializeField] private PlayerCtrl player;
     private enum LevelType
     {
@@ -27,11 +26,6 @@ public class BlockManager : MonoBehaviour
     [SerializeField] private int currentLevel;
     [SerializeField] private float spawnTime;
 
-    void Awake()
-    {
-        uiManager = FindFirstObjectByType<UIManager>();
-    }
-
     private void Start()
     {
         playerCtrl = FindFirstObjectByType<PlayerCtrl>();
@@ -48,7 +42,8 @@ public class BlockManager : MonoBehaviour
 
     private void Update()
     {
-        if (uiManager != null && !uiManager.IsGameReady)
+        if (GameManager.Instance != null && !GameManager.Instance.IsGameReady || 
+            GameManager.Instance.IsGamePaused)
             return;
 
         currentTime += Time.deltaTime;
@@ -108,7 +103,7 @@ public class BlockManager : MonoBehaviour
 
         while (true)
         {
-            if ((uiManager == null || !uiManager.IsGameReady) && !uiManager.IsGameOver)
+            if ((GameManager.Instance == null || !GameManager.Instance.IsGameReady) && !GameManager.Instance.IsGameOver)
             {
                 yield return null;
                 continue;
@@ -164,7 +159,7 @@ public class BlockManager : MonoBehaviour
 
             block.transform.position = new Vector3(x, blockY, 0f);
 
-            if (uiManager.IsGameStarted) spawnTime = Random.Range(0.2f, 0.3f);
+            if (GameManager.Instance.IsGameStarted) spawnTime = Random.Range(0.2f, 0.3f);
             else spawnTime = Random.Range(0.8f, 1.0f);
 
             yield return new WaitForSeconds(spawnTime);

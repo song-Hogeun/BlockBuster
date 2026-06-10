@@ -29,7 +29,7 @@ public class ScoreManager : MonoBehaviour
 
     private void Update()
     {
-        if (UIManager.Instance != null && !UIManager.Instance.IsGameStarted)
+        if (GameManager.Instance != null && !GameManager.Instance.IsGameStarted)
             return;
 
         UpdateScore();

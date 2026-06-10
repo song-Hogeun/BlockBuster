@@ -3,11 +3,12 @@ using UnityEngine;
 
 public class TempGround : MonoBehaviour
 {
-    private UIManager uiManager;
+    private GameManager gameManager;
+    
 
     void Awake()
     {
-        uiManager = FindFirstObjectByType<UIManager>();
+        gameManager = FindFirstObjectByType<GameManager>();
     }
 
     void OnEnable()
@@ -21,7 +22,7 @@ public class TempGround : MonoBehaviour
 
         while (timer > 0)
         {
-            while (uiManager.IsGamePaused)
+            while (gameManager.IsGamePaused)
             {
                 yield return null;
             }
