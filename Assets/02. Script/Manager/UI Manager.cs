@@ -48,6 +48,7 @@ public class UIManager : MonoBehaviour
     public bool IsGameOver { get; set; }
 
     private Coroutine comboAnimCoroutine;
+    private Coroutine extraLifeCoroutine;
     private Vector3 comboTextOriginScale;
 
 
@@ -85,7 +86,7 @@ public class UIManager : MonoBehaviour
         UpdateMultiplierText(1f);
     }
 
-    Init(false, true, false, false, false);
+    Init(false, true, false, false, false, false);
 }
 
     private void Update()
@@ -112,13 +113,14 @@ public class UIManager : MonoBehaviour
         comboManager.OnMultiplierChanged -= UpdateMultiplierText;
     }
 
-    void Init(bool _gameStart, bool _start, bool _inGame, bool _die, bool _joyStick)
+    void Init(bool _gameStart, bool _start, bool _inGame, bool _die, bool _joyStick, bool _extraLife)
     {
         IsGameStarted = _gameStart;
         startSet.SetActive(_start);
         inGameSet.SetActive(_inGame);
         DieSet.SetActive(_die);
         joyStickUI.SetActive(_joyStick);
+        extraLife.SetActive(_extraLife);
     }
 
     public void StartPhase()
@@ -131,7 +133,7 @@ public class UIManager : MonoBehaviour
 
     IEnumerator StartGame()
     {
-        Init(false, false, true, false, false);
+        Init(false, false, true, false, false, false);
         IsGameReady = true;
         
         for (int i = 0; i < startTime; i++)
@@ -193,7 +195,7 @@ public class UIManager : MonoBehaviour
 
     private void ShowDieUI()
     {
-        Init(false, false, false, true, false);
+        Init(false, false, false, true, false, false);
         Die_currScoreText.text = scoreManager.currScore.ToString() + " m";
         Die_maxScoreText.text = scoreManager.maxScore.ToString() + " m";
 
@@ -214,6 +216,27 @@ public class UIManager : MonoBehaviour
     public void ActiveExtraLife(bool isActive)
     {
         extraLife.SetActive(isActive);
+        
+        if(isActive)
+            PlayExtraLifeTextAnimation();
+    }
+
+    private void PlayExtraLifeTextAnimation()
+    {
+        if (extraLife == null)
+            return;
+
+        if (extraLifeCoroutine != null)
+            StopCoroutine(extraLifeCoroutine);
+        
+        extraLifeCoroutine = StartCoroutine(ExtraLifeAnimCoroutine());
+    }
+
+    IEnumerator ExtraLifeAnimCoroutine()
+    {
+        extraLife.SetActive(true);
+        yield return new WaitForSeconds(0.5f);
+        extraLife.SetActive(false);
     }
 
     public void GroundItem()
